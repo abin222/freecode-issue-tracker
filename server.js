@@ -19,12 +19,17 @@ app.use(cors({origin: '*'})); //For FCC testing purposes only
 
 mongoose.Promise = global.Promise;
 
-mongoose.connect(URI,{
+const start = async ()=>{
+  await mongoose.connect(URI,{
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
     useCreateIndex: true
 });
+}
+
+start();
+
 
 
 

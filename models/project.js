@@ -22,11 +22,13 @@ const issueSchema = new Schema(
     },
     assigned_to:{
         //optional
-      type: String
+      type: String,
+      default:''
     },
     status_text:{
         //optional
-        type:String
+        type:String,
+        default:''
     },
     created_on: {
       type: Date,

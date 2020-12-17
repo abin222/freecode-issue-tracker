@@ -16,9 +16,23 @@ const queryParser = (source,fields,obj={})=>{
   return obj;
 }
 
-const bodyParser = (source,fields)=>{
+//compares all the string elements inside requiredFields to each element in issue object,
+//if it finds a match pushes it to the errors array
+
+function requiredFieldChecker(issue, requiredFields) {
+  let errors = []
   
+  
+  requiredFields.forEach(field => {
+    if (!issue[field]) { errors.push(field) }
+  })
+  
+  if (errors.length) {
+    return {error:'required field(s) missing'}
+  }
+  // return false
 }
+
 module.exports = function (app) {
 
   //project name will be apitest for testing
@@ -37,7 +51,7 @@ module.exports = function (app) {
       
       await Issue.find(query,(err,issues)=>{
         if(err){
-          res.status(500).json(err)
+          res.status(400).send(err)
         }
         res.json(issues)
       })
@@ -50,34 +64,39 @@ module.exports = function (app) {
     
     .post(async (req, res)=>{
       let project = req.params.project;
-      let {issue_title,issue_text,created_by,assigned_to,status_text} = req.body;
-      if(!issue_title || !issue_text || !created_by){
-        res.status(504).json({error: 'required field(s) missing'});
+      req.body.project = project;
+      let errors = requiredFieldChecker(req.body,['issue_title','issue_text','created_by'])
+      console.log(errors);
+      if(errors){
+        res.status(400).send(errors);
+        return
+      }else{
+          let {issue_title,issue_text,created_by,assigned_to,status_text} = req.body;
+
+          let projectFromDB = await Project.findOne({projectname:project}).exec();
+
+          const issue = new Issue({
+            project: projectFromDB._id,
+            issue_title: issue_title,
+            issue_text: issue_text,
+            created_by: created_by,
+            assigned_to: assigned_to,
+            status_text: status_text,
+            created_on: Date(),
+            updated_on: Date(),
+            open: true
+          })
+      
+          await issue.save(function (err){
+            if(err) return console.log(err);
+          });
+
+          projectFromDB.issues.push(issue);
+          await projectFromDB.save();
+
+          res.status(200).send(issue);
       }
-      //We will find the project by name, and then add the new issue into this project
-
-      let projectFromDB = await Project.findOne({projectname:project}).exec();
-
-      const issue = new Issue({
-        project: projectFromDB._id,
-        issue_title: issue_title,
-        issue_text: issue_text,
-        created_by: created_by,
-        assigned_to: assigned_to,
-        status_text: status_text,
-        created_on: Date(),
-        updated_on: Date(),
-        open: true
-      })
-  
-      await issue.save(function (err){
-        if(err) return handleError(err);
-      });
-
-      projectFromDB.issues.push(issue);
-      await projectFromDB.save();
-
-      res.send(issue);
+      
        
     })
     
@@ -85,15 +104,19 @@ module.exports = function (app) {
       let project = req.params.project;
       let fields = ['_id','issue_title', 'issue_text', 'created_by', 'assigned_to', 'status_text'];
       let fieldsToUpdate= queryParser(req.body,fields);
+
       if(Object.keys(fieldsToUpdate).length<2){
-          res.json({error: 'no update field(s) sent', _id:fieldsToUpdate._id})
+          if(!req.body._id){
+            return res.json({error:'missing_id'})
+          }
+          return res.json({error: 'no update field(s) sent', _id:fieldsToUpdate._id})
       }
-      let issue=await Issue.findOne({_id:fieldsToUpdate._id},(err,issue)=>{
-        if(err){
-          res.status(500).json({error:'could not update', _id:fieldsToUpdate._id});
-        }
-       
-      });
+
+      let issue=await Issue.findOne({_id:fieldsToUpdate._id}).exec();
+
+      if(!issue){
+        return res.status(500).json({error:'could not update', _id:fieldsToUpdate._id});
+      }
 
       delete fieldsToUpdate._id;
       Object.keys(fieldsToUpdate).forEach(key=>{
@@ -109,20 +132,21 @@ module.exports = function (app) {
       res.json({result: 'successfully updated', _id:issue._id})
     })
     
-    .delete(function (req, res){
+    .delete(async (req, res)=>{
       let project = req.params.project;
-      let {_id}=req.body;
+      let _id=req.body._id;
       if(!_id){
-        res.json({error:'missing_id'});
+        return res.status(404).json({error:'missing_id'});
       }
-      Issue.findByIdAndRemove(_id,(err,issue)=>{
-        if(err){
-          res.json({error: 'could not delete', _id:issue._id})
-        }else{
-          res.json({result:'successfully deleted',_id:issue._id})
-        }
-        
-      })
+      let issue = await Issue.findOne({_id:_id}).exec();
+      console.log(issue);
+      if(!issue){
+        return res.status(405).json({error: 'could not delete', _id:_id})
+      }else{
+           Issue.findByIdAndRemove({_id});
+      res.status(400).json({result:'successfully deleted',_id:issue._id})
+      }
+   
       
       //You can send a DELETE request to /api/issues/{projectname}
       //with an _id to delete an issue.
