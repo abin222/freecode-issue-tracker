@@ -138,6 +138,22 @@ suite('Functional Tests', function() {
               });
       })
 
+      test('update multiple fields on an issue',(done)=>{
+        chai.request(server)
+        .put('/api/issues/apitest')
+        .send({
+            _id: testId,
+            issue_title: 'put works!',
+            issue_text: 'put works!'
+        })
+        .end(function(err, res){
+            assert.equal(res.status, 200);
+            assert.equal(res.body.result,'successfully updated');
+            assert.equal(res.body._id,testId)
+            done();
+          });
+      })
+
       test('update an issue with missing _id',(done)=>{
         chai.request(server)
         .put('/api/issues/apitest')
