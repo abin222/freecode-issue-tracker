@@ -18,7 +18,6 @@ suite('Functional Tests', function() {
             chai.request(server)
                 .post('/api/issues/apitest')
                 .send({
-                    _id: new mongoose.Types.ObjectId(),
                     issue_title: 'chai testing',
                     issue_text: 'chai testing body test',
                     created_by: 'chai tester',
@@ -26,12 +25,14 @@ suite('Functional Tests', function() {
                     status_text: 'test stage'
                 })
                 .end(function(err, res){
+                    console.log(res.body+ ' create issue with every field res.body');
                     assert.equal(res.status, 200);
                     assert.equal(res.body.issue_title,'chai testing');
                     assert.equal(res.body.issue_text,'chai testing body test');
                     assert.equal(res.body.created_by,'chai tester');
                     assert.equal(res.body.assigned_to,'farq himself');
                     assert.equal(res.body.status_text,'test stage');
+                    assert.equal(res.body.open,true);
                     testId=res.body._id;
                     done();
                   });
@@ -46,12 +47,16 @@ suite('Functional Tests', function() {
                 created_by: 'chai tester'
             })
             .end(function(err, res){
+                console.log(res.body)
                 assert.equal(res.status, 200);
                 assert.equal(res.body.issue_title,'chai testing');
                 assert.equal(res.body.issue_text,'chai testing body test');
                 assert.equal(res.body.created_by,'chai tester');
                 assert.equal(res.body.assigned_to,'');
                 assert.equal(res.body.status_text,'');
+                assert.property(res.body, 'created_on')
+                assert.property(res.body, 'updated_on')
+                assert.property(res.body, '_id')
                 done();
               });
           })
@@ -65,6 +70,7 @@ suite('Functional Tests', function() {
             })
             .end(function(err, res){
                 assert.equal(res.status, 400);
+                //res.text refers to the string sent alongside an error status code!
                 assert.equal(res.body.error,'required field(s) missing');
                 done();
               });

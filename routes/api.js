@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 //gets req.query as first argument, then possible queries as second argument.
 //looks if req.query has all the possible fields then returns an object with each params
 //destructured
-const queryParser = (source,fields,obj={})=>{
+const queryOrBodyParser = (source,fields,obj={})=>{
   fields.forEach(field=>{
     if(source[field]){
       obj[field]=source[field]
@@ -40,14 +40,16 @@ module.exports = function (app) {
   
     .get(async (req, res)=>{
       let fields = ['issue_title', 'issue_text', 'created_by', 'assigned_to', 'status_text', 'open', 'created_on', 'updated_on'];
-      let query = queryParser(req.query,fields);
-      let project = req.params.project;
+      let query = queryOrBodyParser(req.query,fields);
+      //we do query.project so we can also query mongoose against project name
+      query.project = req.params.project;
       //You can send a GET request to /api/issues/{projectname}
       //for an array of all issues for that specific projectname,
       // with all the fields present for each issue.
-      let projectFromDB = await Project.findOne({projectname:project});
-      let projectId = projectFromDB._id;
-      query.project=projectId;
+
+      if(req.query._id){
+        query._id=mongoose.Types.ObjectId(req.query._id);
+      }
       
       await Issue.find(query,(err,issues)=>{
         if(err){
@@ -65,36 +67,22 @@ module.exports = function (app) {
     .post(async (req, res)=>{
       let project = req.params.project;
       req.body.project = project;
-      let errors = requiredFieldChecker(req.body,['issue_title','issue_text','created_by'])
-      console.log(errors);
+      let errors = requiredFieldChecker(req.body,['project','issue_title','issue_text','created_by'])
       if(errors){
-        res.status(400).send(errors);
-        return
+        //even though errors object returns the correct message, it is nested so I am manually typing it in
+        
+        res.status(400).json({error:'required field(s) missing'});
+        // res.error = 'required field(s) missing';
+        return;
       }else{
-          let {issue_title,issue_text,created_by,assigned_to,status_text} = req.body;
-
-          let projectFromDB = await Project.findOne({projectname:project}).exec();
-
-          const issue = new Issue({
-            project: projectFromDB._id,
-            issue_title: issue_title,
-            issue_text: issue_text,
-            created_by: created_by,
-            assigned_to: assigned_to,
-            status_text: status_text,
-            created_on: Date(),
-            updated_on: Date(),
-            open: true
-          })
+          let fields = ['project', 'issue_title', 'issue_text', 'created_by', 'assigned_to', 'status_text']
+          let issue = new Issue(queryOrBodyParser(req.body,fields))
       
           await issue.save(function (err){
             if(err) return console.log(err);
           });
 
-          projectFromDB.issues.push(issue);
-          await projectFromDB.save();
-
-          res.status(200).send(issue);
+          res.status(200).json(issue);
       }
       
        
@@ -103,7 +91,7 @@ module.exports = function (app) {
     .put(async (req, res)=>{
       let project = req.params.project;
       let fields = ['_id','issue_title', 'issue_text', 'created_by', 'assigned_to', 'status_text'];
-      let fieldsToUpdate= queryParser(req.body,fields);
+      let fieldsToUpdate= queryOrBodyParser(req.body,fields);
 
       if(Object.keys(fieldsToUpdate).length<2){
           if(!req.body._id){

@@ -5,8 +5,7 @@ const Schema=mongoose.Schema;
 const issueSchema = new Schema(
   {
     project:{
-      type: Schema.Types.ObjectId,
-      ref:'Project'
+      type: String
     },
     issue_title: {
       type: String,
@@ -31,17 +30,28 @@ const issueSchema = new Schema(
         default:''
     },
     created_on: {
-      type: Date,
+      type: String,
     },
     updated_on:{
-        type:Date
+        type:String
     },
     open:{
         //must be true by default
-        type: Boolean
+        type: Boolean,
+        default: true
     }
   }
 );
+
+//middleware for mongoose that will create or update Date properties
+issueSchema.pre('save',function(next){
+  if(!this.created_on){
+    //it is much more useful to save Date as string
+    this.created_on = new Date().toISOString();
+  }
+  this.updated_on = new Date().toISOString();
+  next();
+})
 
 
 
@@ -49,25 +59,22 @@ const issueSchema = new Schema(
 
 const projectSchema = new mongoose.Schema(
     {
-      _id: {
-        type: Schema.Types.ObjectId,
-        required: true
-      },
       projectname: {
         type: String,
         required: true,
       },
       created_on: {
         type: Date,
-      },
-      issues: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'Issue'
-        }
-      ],
+      }
     }
   );
+
+  projectSchema.pre('save', function(next){
+    if(!this.created_on){
+      this.created_on = new Date().toISOString();
+    }
+    next();
+  })
   
   
 const Issue = mongoose.model('Issue',issueSchema) 
@@ -76,8 +83,7 @@ const Project = mongoose.model('Project', projectSchema);
 
 const initialProject = new Project({
     _id:new mongoose.Types.ObjectId(),
-    projectname: 'apitest',
-    created_on: Date.now()
+    projectname: 'apitest'
 });
 
 initialProject.save(function(err){

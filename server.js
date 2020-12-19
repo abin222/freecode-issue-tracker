@@ -30,12 +30,15 @@ const start = async ()=>{
 
 start();
 
-
+// function middlewareThatAddsErrorPropertyToRequest(req,res,next){
+//   req.error = '';
+//   next()
+// }
 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
+// app.use('*', middlewareThatAddsErrorPropertyToRequest)
 //Sample front-end
 app.route('/:project/')
   .get(function (req, res) {
