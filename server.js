@@ -10,12 +10,10 @@ const mongoose = require('mongoose');
 const apiRoutes         = require('./routes/api.js');
 const fccTestingRoutes  = require('./routes/fcctesting.js');
 const runner            = require('./test-runner');
-
+const databaseName = 'FCC issue tracker'
 let app = express();
 
-app.use('/public', express.static(process.cwd() + '/public'));
 
-app.use(cors({origin: '*'})); //For FCC testing purposes only
 
 mongoose.Promise = global.Promise;
 
@@ -30,12 +28,26 @@ const start = async ()=>{
 
 start();
 
+const db = mongoose.connection
+db.on('error',err => {console.error(err)})
+db.once('open',()=>{
+  console.log('Connected to' + databaseName)
+})
+
+process.on('SIGNIT', ()=>{
+  db.close(()=>{
+    console.log(`Closing connection to ${databaseName}`)
+    process.exit(0)
+  })
+})
 // function middlewareThatAddsErrorPropertyToRequest(req,res,next){
 //   req.error = '';
 //   next()
 // }
 
+app.use('/public', express.static(process.cwd() + '/public'));
 
+app.use(cors({origin: '*'})); //For FCC testing purposes only
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // app.use('*', middlewareThatAddsErrorPropertyToRequest)
