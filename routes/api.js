@@ -71,9 +71,9 @@ module.exports = function (app) {
       if(errors){
         //even though errors object returns the correct message, it is nested so I am manually typing it in
         
-        res.status(400).json({error:'required field(s) missing'});
+        return res.status(400).json({error:'required field(s) missing'});
         // res.error = 'required field(s) missing';
-        return;
+        
       }else{
           let fields = ['project', 'issue_title', 'issue_text', 'created_by', 'assigned_to', 'status_text']
           let issue = new Issue(queryOrBodyParser(req.body,fields))
@@ -95,7 +95,7 @@ module.exports = function (app) {
 
       if(Object.keys(fieldsToUpdate).length<2){
           if(!req.body._id){
-            return res.json({error:'missing_id'})
+            return res.json({error:'missing _id'})
           }
           return res.json({error: 'no update field(s) sent', _id:fieldsToUpdate._id})
       }
@@ -124,7 +124,7 @@ module.exports = function (app) {
       let project = req.params.project;
       let _id=req.body._id;
       if(!_id){
-        return res.status(404).json({error:'missing_id'});
+        return res.status(404).json({error:'missing _id'});
       }
       let issue = await Issue.findOne({_id:_id}).exec();
       console.log(issue);
@@ -132,7 +132,7 @@ module.exports = function (app) {
         return res.status(405).json({error: 'could not delete', _id:_id})
       }else{
            Issue.findByIdAndRemove({_id});
-      res.status(400).json({result:'successfully deleted',_id:issue._id})
+      res.status(200).json({result:'successfully deleted',_id:issue._id})
       }
    
       

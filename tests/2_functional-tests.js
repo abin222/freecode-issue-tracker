@@ -166,7 +166,7 @@ suite('Functional Tests', function() {
         .send({
         })
         .end(function(err, res){
-            assert.equal(res.body.error,'missing_id');
+            assert.equal(res.body.error,'missing _id');
             done();
           });
       })
@@ -204,7 +204,7 @@ suite('Functional Tests', function() {
             .delete('/api/issues/apitest')
             .send({_id:testId})
             .end(function(err, res){
-                assert.equal(res.status,400);
+                assert.equal(res.status,200);
                 assert.equal(res.body.result,'successfully deleted');
                 done();
             });
@@ -228,7 +228,7 @@ suite('Functional Tests', function() {
           .send({})
           .end(function(err, res) {
             assert.equal(res.status, 404)
-            assert.equal(res.body.error, 'missing_id')
+            assert.equal(res.body.error, 'missing _id')
             done()
           })
     })
