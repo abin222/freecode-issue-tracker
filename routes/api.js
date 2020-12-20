@@ -71,7 +71,7 @@ module.exports = function (app) {
       if(errors){
         //even though errors object returns the correct message, it is nested so I am manually typing it in
         
-        return res.status(400).json({error:'required field(s) missing'});
+        return res.send({error:'required field(s) missing'});
         // res.error = 'required field(s) missing';
         
       }else{
@@ -82,7 +82,7 @@ module.exports = function (app) {
             if(err) return console.log(err);
           });
 
-          res.status(200).json(issue);
+          res.status(200).send(issue);
       }
       
        
@@ -95,15 +95,15 @@ module.exports = function (app) {
 
       if(Object.keys(fieldsToUpdate).length<2){
           if(!req.body._id){
-            return res.json({error:'missing _id'})
+            return res.send({error:'missing _id'})
           }
-          return res.json({error: 'no update field(s) sent', _id:fieldsToUpdate._id})
+          return res.send({error: 'no update field(s) sent', _id:fieldsToUpdate._id})
       }
 
       let issue=await Issue.findOne({_id:fieldsToUpdate._id}).exec();
 
       if(!issue){
-        return res.status(500).json({error:'could not update', _id:fieldsToUpdate._id});
+        return res.send({error:'could not update', _id:fieldsToUpdate._id});
       }
 
       delete fieldsToUpdate._id;
@@ -124,12 +124,12 @@ module.exports = function (app) {
       let project = req.params.project;
       let _id=req.body._id;
       if(!_id){
-        return res.status(404).json({error:'missing _id'});
+        return res.send({error:'missing _id'});
       }
       let issue = await Issue.findOne({_id:_id}).exec();
       console.log(issue);
       if(!issue){
-        return res.status(405).json({error: 'could not delete', _id:_id})
+        return res.send({error: 'could not delete', _id:_id})
       }else{
            Issue.findByIdAndRemove({_id});
       res.status(200).json({result:'successfully deleted',_id:issue._id})

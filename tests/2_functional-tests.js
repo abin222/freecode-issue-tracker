@@ -69,7 +69,7 @@ suite('Functional Tests', function() {
                 issue_text: 'chai testing body text'
             })
             .end(function(err, res){
-                assert.equal(res.status, 400);
+                assert.equal(res.status, 200);
                 //res.text refers to the string sent alongside an error status code!
                 assert.equal(res.body.error,'required field(s) missing');
                 done();
@@ -216,7 +216,7 @@ suite('Functional Tests', function() {
         .delete('/api/issues/apitest')
         .send({_id:new mongoose.Types.ObjectId()})
         .end(function(err, res){
-            assert.equal(res.status,405);
+            assert.equal(res.status,200);
             assert.equal(res.body.error,'could not delete');
             done();
         });
@@ -227,7 +227,7 @@ suite('Functional Tests', function() {
           .delete('/api/issues/test')
           .send({})
           .end(function(err, res) {
-            assert.equal(res.status, 404)
+            assert.equal(res.status, 200)
             assert.equal(res.body.error, 'missing _id')
             done()
           })
