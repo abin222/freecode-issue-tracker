@@ -3,4 +3,4 @@
 
 # freecode-issue-tracker
 
-#solution:https://boilerplate-project-issuetracker.ofk8vb.repl.co/{https://boilerplate-project-issuetracker.ofk8vb.repl.co/}
+#solution:https://boilerplate-project-issuetracker.ofk8vb.repl.co/
